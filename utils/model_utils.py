@@ -139,7 +139,7 @@ def aggregate_data_(clients, dataset, dataset_name, batch_size):
         user_data = dataset[id]
         X, y = convert_data(user_data['x'], user_data['y'], dataset=dataset_name)
         combined += [(x, y) for x, y in zip(X, y)]
-        unique_y=torch.unique(y)
+        unique_y=torch.unique(y) # 选出不重复的元素
         unique_y = unique_y.detach().numpy()
         unique_labels += list(unique_y)
 

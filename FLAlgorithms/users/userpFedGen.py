@@ -27,22 +27,23 @@ class UserpFedGen(User):
             self.label_counts[int(label)] += count
 
     def clean_up_counts(self):
+        # self.unique_labels：标签类别的数量，MNIST：10
         del self.label_counts
         self.label_counts = {label:1 for label in range(self.unique_labels)}
 
     def train(self, glob_iter, personalized=False, early_stop=100, regularization=True, verbose=False):
         self.clean_up_counts()
         self.model.train()
-        self.generative_model.eval()
+        self.generative_model.eval() # 生成器不训练
         TEACHER_LOSS, DIST_LOSS, LATENT_LOSS = 0, 0, 0
         for epoch in range(self.local_epochs):
             self.model.train()
             for i in range(self.K):
                 self.optimizer.zero_grad()
                 #### sample from real dataset (un-weighted)
-                samples =self.get_next_train_batch(count_labels=True)
+                samples =self.get_next_train_batch(count_labels=True) # 产生数据
                 X, y = samples['X'], samples['y']
-                self.update_label_counts(samples['labels'], samples['counts'])
+                self.update_label_counts(samples['labels'], samples['counts']) # 统计标签数量
                 model_result=self.model(X, logit=True)
                 user_output_logp = model_result['output']
                 predictive_loss=self.loss(user_output_logp, y)

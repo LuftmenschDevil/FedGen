@@ -13,7 +13,7 @@ MIN_SAMPLES_PER_LABEL=1
 
 class FedGen(Server):
     def __init__(self, args, model, seed):
-        super().__init__(args, model, seed)
+        super().__init__(args, model, seed) # model：cnn
 
         # Initialize data for all users
         data = read_data(args.dataset)
@@ -26,18 +26,20 @@ class FedGen(Server):
 
         self.early_stop = 20  # stop using generated samples after 20 local epochs
         self.student_model = copy.deepcopy(self.model)
-        self.generative_model = create_generative_model(args.dataset, args.algorithm, self.model_name, args.embedding)
+        self.generative_model = create_generative_model(args.dataset, args.algorithm, self.model_name, args.embedding) # 生成器模型
         if not args.train:
+            # 输出模型参数数量
             print('number of generator parameteres: [{}]'.format(self.generative_model.get_number_of_parameters()))
             print('number of model parameteres: [{}]'.format(self.model.get_number_of_parameters()))
-        self.latent_layer_idx = self.generative_model.latent_layer_idx
-        self.init_ensemble_configs()
+        self.latent_layer_idx = self.generative_model.latent_layer_idx # -1，暂时不知道有什么用
+        self.init_ensemble_configs() # 初始化配置
         print("latent_layer_idx: {}".format(self.latent_layer_idx))
         print("label embedding {}".format(self.generative_model.embedding))
         print("ensemeble learning rate: {}".format(self.ensemble_lr))
         print("ensemeble alpha = {}, beta = {}, eta = {}".format(self.ensemble_alpha, self.ensemble_beta, self.ensemble_eta))
         print("generator alpha = {}, beta = {}".format(self.generative_alpha, self.generative_beta))
-        self.init_loss_fn()
+        self.init_loss_fn() # 初始化损失函数
+        # 得到每个客户端的数据迭代器，和所有客户端的标签(unique)
         self.train_data_loader, self.train_iter, self.available_labels = aggregate_user_data(data, args.dataset, self.ensemble_batch_size)
         self.generative_optimizer = torch.optim.Adam(
             params=self.generative_model.parameters(),
@@ -49,6 +51,7 @@ class FedGen(Server):
             params=self.model.parameters(),
             lr=self.ensemble_lr, betas=(0.9, 0.999),
             eps=1e-08, weight_decay=0, amsgrad=False)
+        # 调整学习率
         self.lr_scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer=self.optimizer, gamma=0.98)
 
         #### creating users ####
@@ -58,6 +61,7 @@ class FedGen(Server):
             self.total_train_samples+=len(train_data)
             self.total_test_samples += len(test_data)
             id, train, test=read_user_data(i, data, dataset=args.dataset)
+            # 本地客户端
             user=UserpFedGen(
                 args, id, model, self.generative_model,
                 train_data, test_data,
@@ -76,7 +80,7 @@ class FedGen(Server):
             if not self.local:
                 self.send_parameters(mode=self.mode)# broadcast averaged prediction model
             self.evaluate()
-            chosen_verbose_user = np.random.randint(0, len(self.users))
+            chosen_verbose_user = np.random.randint(0, len(self.users)) # 选择客户端
             self.timestamp = time.time() # log user-training start time
             for user_id, user in zip(self.user_idxs, self.selected_users): # allow selected users to train
                 verbose= user_id == chosen_verbose_user

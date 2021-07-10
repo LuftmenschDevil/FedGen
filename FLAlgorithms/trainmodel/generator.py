@@ -23,6 +23,7 @@ class Generator(nn.Module):
         self.build_network()
 
     def get_number_of_parameters(self):
+        # 统计参数个数
         pytorch_total_params=sum(p.numel() for p in self.parameters() if p.requires_grad)
         return pytorch_total_params
 
