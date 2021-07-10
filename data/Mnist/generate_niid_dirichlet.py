@@ -127,6 +127,7 @@ def devide_train_data(data, n_sample, SRC_CLASSES, NUM_USERS, min_sample, alpha=
     return X, y, Labels, idx_batch, samples_per_user
 
 def divide_test_data(NUM_USERS, SRC_CLASSES, test_data, Labels, unknown_test):
+    # 本地测试集应该和训练集分布划分一致
     # Create TEST data for each user.
     test_X = [[] for _ in range(NUM_USERS)]
     test_y = [[] for _ in range(NUM_USERS)]
